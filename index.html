@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberSec Tracker</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app">
+
+    <header>
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <h1>Cyber<span>Sec</span> Tracker</h1>
+      </div>
+      <div class="header-stats">
+        <div class="hstat"><strong id="h-skills">0</strong> Skills</div>
+        <div class="hstat"><strong id="h-tasks">0</strong> Tasks done</div>
+        <div class="hstat"><strong id="h-resources">0</strong> Resources</div>
+        <div class="hstat">Level <strong id="h-level">1</strong></div>
+      </div>
+      <div class="timer-widget" id="timer-widget">
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-controls">
+          <button class="timer-btn" id="timer-toggle" onclick="toggleTimer()">▶</button>
+          <button class="timer-btn" onclick="resetTimer()">↺</button>
+          <select id="timer-mode" onchange="setTimerMode()" style="font-size:10px;padding:3px 6px;width:auto">
+            <option value="25">Focus 25m</option>
+            <option value="10">Short 10m</option>
+            <option value="5">Break 5m</option>
+            <option value="50">Deep 50m</option>
+          </select>
+        </div>
+        <div class="timer-label" id="timer-label">Focus Session</div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab" id="tab-skills" onclick="switchTab('skills')">🎯 Skills</button>
+      <button class="tab" id="tab-tasks" onclick="switchTab('tasks')">✅ Tasks</button>
+      <button class="tab" id="tab-resources" onclick="switchTab('resources')">📚 Resources</button>
+      <button class="tab" id="tab-notes" onclick="switchTab('notes')">📝 Notes</button>
+      <button class="tab" id="tab-goals" onclick="switchTab('goals')">🚀 Goals</button>
+      <button class="tab" id="tab-timeline" onclick="switchTab('timeline')">📅 Timeline</button>
+      <button class="tab" id="tab-achievements" onclick="switchTab('achievements')">🏆 Achievements</button>
+    </div>
+
+    <!-- ─── DASHBOARD ─── -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="dash-grid">
+        <div class="stat-card" style="--card-color: var(--accent)">
+          <div class="label">Total XP</div>
+          <div class="value" id="d-xp">0</div>
+          <div class="sub">experience points</div>
+        </div>
+        <div class="stat-card" style="--card-color: var(--blue)">
+          <div class="label">Skills Tracked</div>
+          <div class="value" id="d-skills">0</div>
+          <div class="sub">across all domains</div>
+        </div>
+        <div class="stat-card" style="--card-color: var(--yellow)">
+          <div class="label">Tasks Complete</div>
+          <div class="value" id="d-done">0</div>
+          <div class="sub" id="d-task-sub">of 0 total</div>
+        </div>
+        <div class="stat-card" style="--card-color: var(--purple)">
+          <div class="label">Resources Saved</div>
+          <div class="value" id="d-res">0</div>
+          <div class="sub">learning materials</div>
+        </div>
+      </div>
+
+      <div class="xp-bar-wrap">
+        <div class="xp-top">
+          <div class="xp-title">Level <span id="xp-level">1</span> — <span id="xp-rank">Script Kiddie</span></div>
+          <div class="xp-level"><span id="xp-cur">0</span> / <span id="xp-next">200</span> XP</div>
+        </div>
+        <div class="xp-bar">
+          <div class="xp-fill" id="xp-fill" style="width:0%"></div>
+        </div>
+        <div class="xp-sub" id="xp-sub-text">0 XP to next level</div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Skill Progress</div>
+        <button class="btn btn-ghost btn-sm" onclick="switchTab('skills')">Manage →</button>
+      </div>
+      <div class="skill-grid" id="dash-skill-grid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🎯</div>
+          <p>No skills yet — add them in the Skills tab</p>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px">
+        <div class="section-title">Upcoming Tasks</div>
+        <button class="btn btn-ghost btn-sm" onclick="switchTab('tasks')">All tasks →</button>
+      </div>
+      <div class="task-list" id="dash-tasks"></div>
+
+      <div class="section-header" style="margin-top:24px">
+        <div class="section-title">Skill Radar</div>
+        <button class="btn btn-ghost btn-sm" onclick="switchTab('skills')">Manage →</button>
+      </div>
+      <div class="radar-wrap">
+        <canvas id="radar-canvas" width="340" height="280"></canvas>
+        <div class="radar-legend" id="radar-legend"></div>
+      </div>
+
+      <div class="section-header" style="margin-top:24px">
+        <div class="section-title">Data</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Export</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">📥 Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SKILLS ─── -->
+    <div id="panel-skills" class="panel">
+      <div class="add-skill-form">
+        <div class="form-group">
+          <label class="form-label">Skill name</label>
+          <input type="text" id="skill-name" list="suggested-skills" placeholder="e.g. Vulnerability Scanning" />
+          <datalist id="suggested-skills">
+            <!-- Vulnerability Management -->
+            <option value="Vulnerability Scanning (Nessus, OpenVAS)">
+            <option value="Patch Management">
+            <option value="Vulnerability Scoring (CVSS)">
+            <option value="Asset Discovery">
+              <!-- Network Security -->
+            <option value="Firewall Configuration (NGFW, IPS)">
+            <option value="Network Protocols (TCP/IP, DNS, HTTP/S)">
+            <option value="Packet Analysis (Wireshark)">
+            <option value="VPN & Zero Trust">
+              <!-- IAM -->
+            <option value="RBAC & ABAC">
+            <option value="Multi-Factor Authentication (MFA)">
+            <option value="Directory Services (AD, LDAP)">
+            <option value="Privileged Access Management (PAM)">
+              <!-- AppSec -->
+            <option value="OWASP Top 10">
+            <option value="Secure Coding">
+            <option value="SAST/DAST">
+            <option value="API Security">
+              <!-- Incident Response -->
+            <option value="SIEM Management (Splunk, ELK)">
+            <option value="Threat Hunting">
+            <option value="Digital Forensics">
+              <!-- GRC -->
+            <option value="Frameworks (NIST CSF, ISO 27001)">
+            <option value="Risk Assessment">
+            <option value="Compliance Auditing (GDPR, PCI-DSS)">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="skill-cat">
+            <option>Vulnerability Management</option>
+            <option>Network Security</option>
+            <option>Identity & Access Management</option>
+            <option>Application Security</option>
+            <option>Incident Response & Forensics</option>
+            <option>GRC / Compliance</option>
+            <option>Penetration Testing</option>
+            <option>General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Initial progress %</label>
+          <input type="number" id="skill-prog" min="0" max="100" value="0" placeholder="0" />
+        </div>
+        <button class="btn btn-primary" onclick="addSkill()">+ Add Skill</button>
+      </div>
+
+      <div class="skill-grid" id="skills-grid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🎯</div>
+          <p>Add your first skill above</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TASKS ─── -->
+    <div id="panel-tasks" class="panel">
+      <div class="add-task-form">
+        <div class="form-group">
+          <label class="form-label">Task</label>
+          <input type="text" id="task-name" placeholder="e.g. Complete TryHackMe room" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Linked skill</label>
+          <select id="task-skill">
+            <option value="">— none —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="task-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due date</label>
+          <input type="date" id="task-due" />
+        </div>
+        <button class="btn btn-primary" onclick="addTask()">+ Add</button>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="filter-btn active" onclick="filterTasks('all',this)">All</button>
+        <button class="filter-btn" onclick="filterTasks('pending',this)">Pending</button>
+        <button class="filter-btn" onclick="filterTasks('done',this)">Done</button>
+        <button class="filter-btn" onclick="filterTasks('high',this)">🔴 High</button>
+        <input type="text" id="task-search" placeholder="Search tasks..." style="max-width:220px;margin-left:auto"
+          oninput="renderTasks()" />
+      </div>
+
+      <div class="task-list" id="tasks-list"></div>
+    </div>
+
+    <!-- ─── RESOURCES ─── -->
+    <div id="panel-resources" class="panel">
+      <div class="resources-top">
+        <input type="text" id="res-search" placeholder="Search resources..." oninput="renderResources()" />
+        <button class="btn btn-primary" onclick="openAddResource()">+ Add Resource</button>
+        <button class="btn btn-ghost" onclick="checkResourceURL()">🔍 Check URL</button>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterRes('all',this)">All</button>
+        <button class="filter-btn" onclick="filterRes('Vulnerability Management',this)">Vuln Mgmt</button>
+        <button class="filter-btn" onclick="filterRes('Network Security',this)">Network</button>
+        <button class="filter-btn" onclick="filterRes('Identity & Access Management',this)">IAM</button>
+        <button class="filter-btn" onclick="filterRes('Application Security',this)">AppSec</button>
+        <button class="filter-btn" onclick="filterRes('Incident Response & Forensics',this)">IR & Forensics</button>
+        <button class="filter-btn" onclick="filterRes('GRC / Compliance',this)">GRC</button>
+        <button class="filter-btn" onclick="filterRes('Penetration Testing',this)">Pentest</button>
+        <button class="filter-btn" onclick="filterRes('free',this)">Free only</button>
+        <button class="filter-btn" onclick="filterRes('cert',this)">Certs</button>
+      </div>
+      <div class="resource-grid" id="resource-grid"></div>
+    </div>
+
+    <!-- ─── NOTES ─── -->
+    <div id="panel-notes" class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="section-title">Quick Notes</div>
+        <button class="btn btn-primary btn-sm" onclick="addNote()">+ New Note</button>
+      </div>
+      <div class="notes-layout">
+        <div class="notes-list" id="notes-list"></div>
+        <div class="note-editor" id="note-editor">
+          <div class="note-placeholder">Select a note or create a new one</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── GOALS ─── -->
+    <div id="panel-goals" class="panel">
+      <div class="add-goal-form">
+        <div class="form-group">
+          <label class="form-label">Goal Title</label>
+          <input type="text" id="goal-title" placeholder="e.g. Earn CompTIA Security+" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="goal-cat">
+            <option>Certification</option>
+            <option>Skill Mastery</option>
+            <option>Job / Internship</option>
+            <option>CTF / Competition</option>
+            <option>Course Completion</option>
+            <option>Project</option>
+            <option>Networking</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Date</label>
+          <input type="date" id="goal-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="goal-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addGoal()">+ Add Goal</button>
+      </div>
+      <div class="goals-list" id="goals-list"></div>
+    </div>
+
+    <!-- ─── TIMELINE ─── -->
+    <div id="panel-timeline" class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div class="section-title">Career Timeline</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddEvent()">+ Add Event</button>
+      </div>
+      <div class="timeline" id="timeline-list"></div>
+    </div>
+
+    <!-- ─── ACHIEVEMENTS ─── -->
+    <div id="panel-achievements" class="panel">
+      <div style="margin-bottom:20px">
+        <div class="section-title" style="margin-bottom:6px">Achievements</div>
+        <div style="font-size:11px;color:var(--text3)">Earn badges by hitting milestones across your tracker.</div>
+      </div>
+      <div class="achievements-grid" id="achievements-grid"></div>
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- Add Timeline Event Modal -->
+  <div class="modal-overlay" id="event-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+      <div class="modal-title">📅 Add Career Event</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Event Title</label>
+          <input type="text" id="ev-title" placeholder="e.g. Passed CompTIA Security+" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="ev-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select id="ev-type">
+            <option value="cert">🏅 Certification</option>
+            <option value="job">💼 Job / Role</option>
+            <option value="course">📖 Course / Training</option>
+            <option value="ctf">🚩 CTF / Competition</option>
+            <option value="project">🔧 Project</option>
+            <option value="milestone">⭐ Milestone</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="ev-desc" rows="2" placeholder="Brief description..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="document.getElementById('event-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-primary" onclick="addEvent()">Add Event</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Resource Modal -->
+  <div class="modal-overlay" id="res-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-title">+ Add Resource</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" id="r-title" placeholder="e.g. TryHackMe" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL</label>
+          <input type="url" id="r-url" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="r-desc" rows="2" placeholder="What is this resource?"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="r-cat">
+              <option>Vulnerability Management</option>
+              <option>Network Security</option>
+              <option>Identity & Access Management</option>
+              <option>Application Security</option>
+              <option>Incident Response & Forensics</option>
+              <option>GRC / Compliance</option>
+              <option>Penetration Testing</option>
+              <option>General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select id="r-type">
+              <option value="free">Free</option>
+              <option value="paid">Paid</option>
+              <option value="cert">Certification</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="addResource()">Add Resource</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Resource Modal -->
+  <div class="modal-overlay" id="edit-res-modal" style="display:none"
+    onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+      <div class="modal-title">✎ Edit Resource</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" id="er-title" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL</label>
+          <input type="url" id="er-url" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="er-desc" rows="2"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="er-cat">
+              <option>Vulnerability Management</option>
+              <option>Network Security</option>
+              <option>Identity & Access Management</option>
+              <option>Application Security</option>
+              <option>Incident Response & Forensics</option>
+              <option>GRC / Compliance</option>
+              <option>Penetration Testing</option>
+              <option>General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select id="er-type">
+              <option value="free">Free</option>
+              <option value="paid">Paid</option>
+              <option value="cert">Certification</option>
+            </select>
+          </div>
+        </div>
+        <input type="hidden" id="er-id" />
+        <div class="modal-actions">
+          <button class="btn btn-ghost"
+            onclick="document.getElementById('edit-res-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-primary" onclick="saveResourceEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Skill Modal -->
+  <div class="modal-overlay" id="edit-skill-modal" style="display:none"
+    onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+      <div class="modal-title">✎ Edit Skill</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Skill name</label>
+          <input type="text" id="es-name" list="suggested-skills" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="es-cat">
+            <option>Vulnerability Management</option>
+            <option>Network Security</option>
+            <option>Identity & Access Management</option>
+            <option>Application Security</option>
+            <option>Incident Response & Forensics</option>
+            <option>GRC / Compliance</option>
+            <option>Penetration Testing</option>
+            <option>General</option>
+          </select>
+        </div>
+        <input type="hidden" id="es-id" />
+        <div class="modal-actions">
+          <button class="btn btn-ghost"
+            onclick="document.getElementById('edit-skill-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-primary" onclick="saveSkillEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check URL Modal -->
+  <div class="modal-overlay" id="check-modal" style="display:none"
+    onclick="if(event.target===this)document.getElementById('check-modal').style.display='none'">
+    <div class="modal">
+      <div class="modal-title">🔍 Check Resource URL</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Enter URL to check</label>
+          <input type="url" id="check-url" placeholder="https://..." />
+        </div>
+        <div id="check-result"
+          style="font-size:12px;color:var(--text2);min-height:40px;padding:10px;background:var(--bg4);border-radius:var(--r);margin-top:4px">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost"
+            onclick="document.getElementById('check-modal').style.display='none'">Close</button>
+          <button class="btn btn-primary" onclick="doCheckURL()">Check</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
